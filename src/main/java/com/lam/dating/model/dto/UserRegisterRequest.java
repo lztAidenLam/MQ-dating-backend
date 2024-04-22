@@ -1,4 +1,4 @@
-package com.lam.dating.model.domain.request;
+package com.lam.dating.model.dto;
 
 import lombok.Data;
 
