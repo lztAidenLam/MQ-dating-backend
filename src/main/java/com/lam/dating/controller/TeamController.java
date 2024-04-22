@@ -10,6 +10,7 @@ import com.lam.dating.model.dto.TeamAddRequest;
 import com.lam.dating.model.dto.TeamQuery;
 import com.lam.dating.model.entity.Team;
 import com.lam.dating.model.entity.User;
+import com.lam.dating.model.vo.TeamUserVO;
 import com.lam.dating.service.TeamService;
 import com.lam.dating.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -91,14 +92,12 @@ public class TeamController {
     }
 
     @GetMapping("/list")
-    public BaseResponse<List<Team>> teamsList(TeamQuery teamQuery) {
+    public BaseResponse<List<TeamUserVO>> teamsList(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Team team = new Team();
-        BeanUtils.copyProperties(teamQuery, team);
-        QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>(team);
-        List<Team> teamList = teamService.list(teamQueryWrapper);
+        boolean isAdmin = userService.isAdmin(request);
+        List<TeamUserVO> teamList = teamService.selectList(teamQuery, isAdmin);
         return ResultUtils.success(teamList);
     }
 
