@@ -1,12 +1,15 @@
 package com.lam.dating.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lam.dating.common.ErrorCode;
 import com.lam.dating.common.TeamStatusEnum;
 import com.lam.dating.exception.BusinessException;
+import com.lam.dating.mapper.TeamMapper;
 import com.lam.dating.model.dto.TeamJoinRequest;
 import com.lam.dating.model.dto.TeamQuery;
 import com.lam.dating.model.dto.TeamUpdateRequest;
@@ -16,11 +19,9 @@ import com.lam.dating.model.entity.UserTeam;
 import com.lam.dating.model.vo.TeamUserVO;
 import com.lam.dating.model.vo.UserVO;
 import com.lam.dating.service.TeamService;
-import com.lam.dating.mapper.TeamMapper;
 import com.lam.dating.service.UserService;
 import com.lam.dating.service.UserTeamService;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author AidenLam
@@ -118,8 +121,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return teamId;
     }
 
-    @Override
-    public List<TeamUserVO> selectList(TeamQuery teamQuery, boolean isAdmin) {
+    private  LambdaQueryWrapper<Team> getQueryWrapper(TeamQuery teamQuery, boolean isAdmin) {
         LambdaQueryWrapper<Team> queryWrapper = new LambdaQueryWrapper<>();
         if (teamQuery != null) {
             Long teamId = teamQuery.getId();
@@ -165,6 +167,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         }
         // 不显示过期队伍
         queryWrapper.and(qw -> qw.gt(Team::getExpireTime, new Date()).or().isNull(Team::getExpireTime));
+        return queryWrapper;
+    }
+
+    @Override
+    public List<TeamUserVO> selectList(TeamQuery teamQuery, boolean isAdmin) {
+        LambdaQueryWrapper<Team> queryWrapper = getQueryWrapper(teamQuery, isAdmin);
         List<Team> teamList = this.list(queryWrapper);
 
         // 查询不到数据，返回空集合
@@ -283,6 +291,21 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "加入队伍失败");
         }
         return true;
+    }
+
+    @Override
+    public Page<TeamUserVO> selectListPage(TeamQuery teamQuery, boolean isAdmin) {
+        LambdaQueryWrapper<Team> queryWrapper = getQueryWrapper(teamQuery, isAdmin);
+        Page<Team> page = new Page<>(teamQuery.getPagNum(), teamQuery.getPageSize());
+        // 查询并分页
+        Page<Team> teamPage = this.page(page, queryWrapper);
+        // 提取分页数据并转换成vo封装
+        List<TeamUserVO> teamUserVOList = teamPage.getRecords().stream()
+                .map(team -> BeanUtil.toBean(team, TeamUserVO.class))
+                .collect(Collectors.toList());
+        Page<TeamUserVO> pageVO = new Page<>(teamQuery.getPagNum(), teamQuery.getPageSize());
+        pageVO.setRecords(teamUserVOList);
+        return pageVO;
     }
 }
 

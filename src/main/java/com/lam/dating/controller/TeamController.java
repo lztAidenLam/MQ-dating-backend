@@ -43,6 +43,13 @@ public class TeamController {
     private RedisTemplate redisTemplate;
 
 
+    /**
+     * 增加队伍
+     *
+     * @param teamAddRequest 传入队伍对象
+     * @param request        请求
+     * @return 新增队伍id
+     */
     @PostMapping("/add")
     public BaseResponse<Long> addTeam(@RequestBody TeamAddRequest teamAddRequest, HttpServletRequest request) {
         if (teamAddRequest == null) {
@@ -57,18 +64,31 @@ public class TeamController {
     }
 
 
+    /**
+     * 删除队伍
+     *
+     * @param teamId 队伍id
+     * @return 删除结果
+     */
     @PostMapping("/delete")
     public BaseResponse<Boolean> deleteTeam(@RequestBody long teamId) {
         if (teamId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         boolean deleteResult = teamService.removeById(teamId);
-        if (!deleteResult){
+        if (!deleteResult) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
         }
         return ResultUtils.success(true);
     }
 
+    /**
+     * 更新队伍信息
+     *
+     * @param team    传入队伍对象
+     * @param request 请求
+     * @return 更新结果
+     */
     @PostMapping("/update")
     public BaseResponse<Boolean> updateTeam(@RequestBody TeamUpdateRequest team, HttpServletRequest request) {
         if (team == null) {
@@ -82,6 +102,12 @@ public class TeamController {
         return ResultUtils.success(true);
     }
 
+    /**
+     * 根据 id 查询队伍
+     *
+     * @param teamId 查询的队伍id
+     * @return 查询到的队伍对象
+     */
     @GetMapping("/getOne")
     public BaseResponse<Team> getById(long teamId) {
         if (teamId <= 0) {
@@ -94,6 +120,13 @@ public class TeamController {
         return ResultUtils.success(team);
     }
 
+    /**
+     * 查询所有符合条件的队伍
+     *
+     * @param teamQuery 查询条件
+     * @param request   请求
+     * @return 查询到的队伍集合
+     */
     @GetMapping("/list")
     public BaseResponse<List<TeamUserVO>> teamsList(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
@@ -104,19 +137,30 @@ public class TeamController {
         return ResultUtils.success(teamList);
     }
 
+    /**
+     * 查询所有符合条件的队伍，并分页
+     *
+     * @param teamQuery 查询条件
+     * @param request   请求
+     * @return 查询到的队伍集合并分页
+     */
     @GetMapping("/list/page")
-    public BaseResponse<Page<Team>> teamsListPage(TeamQuery teamQuery) {
+    public BaseResponse<Page<TeamUserVO>> teamsListPage(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Team team = new Team();
-        BeanUtils.copyProperties(teamQuery, team);
-        Page<Team> page = new Page<Team>(teamQuery.getPagNum(), teamQuery.getPageSize());
-        QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>(team);
-        Page<Team> teamPage = teamService.page(page, teamQueryWrapper);
-        return ResultUtils.success(teamPage);
+        boolean isAdmin = userService.isAdmin(request);
+        Page<TeamUserVO> pageVO = teamService.selectListPage(teamQuery, isAdmin);
+        return ResultUtils.success(pageVO);
     }
 
+    /**\
+     * 用户加入队伍
+     *
+     * @param teamJoinRequest 要加入的队伍信息
+     * @param request         请求
+     * @return 加入结果
+     */
     @PostMapping("/join")
     public BaseResponse<Boolean> joinTeam(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
         if (teamJoinRequest == null) {

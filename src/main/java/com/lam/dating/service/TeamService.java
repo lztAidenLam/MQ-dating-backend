@@ -1,5 +1,6 @@
 package com.lam.dating.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lam.dating.model.dto.TeamJoinRequest;
 import com.lam.dating.model.dto.TeamQuery;
 import com.lam.dating.model.dto.TeamUpdateRequest;
@@ -49,4 +50,12 @@ public interface TeamService extends IService<Team> {
      * @return 加入结果
      */
     Boolean joinTeam(TeamJoinRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 查询符合条件的队伍集合并分页
+     * @param teamQuery 传入查询队伍参数
+     * @param isAdmin 是否为管理员
+     * @return 符合条件的队伍分页集合
+     */
+    Page<TeamUserVO> selectListPage(TeamQuery teamQuery, boolean isAdmin);
 }
