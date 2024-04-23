@@ -7,6 +7,7 @@ import com.lam.dating.common.ErrorCode;
 import com.lam.dating.common.ResultUtils;
 import com.lam.dating.exception.BusinessException;
 import com.lam.dating.model.dto.TeamAddRequest;
+import com.lam.dating.model.dto.TeamJoinRequest;
 import com.lam.dating.model.dto.TeamQuery;
 import com.lam.dating.model.dto.TeamUpdateRequest;
 import com.lam.dating.model.entity.Team;
@@ -114,6 +115,16 @@ public class TeamController {
         QueryWrapper<Team> teamQueryWrapper = new QueryWrapper<>(team);
         Page<Team> teamPage = teamService.page(page, teamQueryWrapper);
         return ResultUtils.success(teamPage);
+    }
+
+    @PostMapping("/join")
+    public BaseResponse<Boolean> joinTeam(@RequestBody TeamJoinRequest teamJoinRequest, HttpServletRequest request) {
+        if (teamJoinRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        Boolean result = teamService.joinTeam(teamJoinRequest, loginUser);
+        return ResultUtils.success(result);
     }
 
 }

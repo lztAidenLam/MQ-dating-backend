@@ -1,5 +1,6 @@
 package com.lam.dating.service;
 
+import com.lam.dating.model.dto.TeamJoinRequest;
 import com.lam.dating.model.dto.TeamQuery;
 import com.lam.dating.model.dto.TeamUpdateRequest;
 import com.lam.dating.model.entity.Team;
@@ -40,4 +41,12 @@ public interface TeamService extends IService<Team> {
      * @return 更新结果
      */
     boolean updateTeam(TeamUpdateRequest team, User loginUser);
+
+    /**
+     * 用户加入队伍
+     * @param teamJoinRequest 队伍信息
+     * @param loginUser 登录用户
+     * @return 加入结果
+     */
+    Boolean joinTeam(TeamJoinRequest teamJoinRequest, User loginUser);
 }
