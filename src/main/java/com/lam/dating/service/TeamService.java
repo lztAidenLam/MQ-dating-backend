@@ -58,4 +58,20 @@ public interface TeamService extends IService<Team> {
      * @return 符合条件的队伍分页集合
      */
     Page<TeamUserVO> selectListPage(TeamQuery teamQuery, boolean isAdmin);
+
+    /**
+     * 退出队伍
+     * @param teamId 要退出队伍的id
+     * @param loginUser 当前登录用户
+     * @return 退出结果
+     */
+    Boolean quitTeam(long teamId, User loginUser);
+
+    /**
+     * 解散队伍
+     * @param teamId 队伍id
+     * @param loginUser 当前登录用户
+     * @return 解散结果
+     */
+    Boolean deleteTeam(long teamId, User loginUser);
 }
