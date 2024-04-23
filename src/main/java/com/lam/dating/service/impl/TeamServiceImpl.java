@@ -1,7 +1,6 @@
 package com.lam.dating.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,6 +8,7 @@ import com.lam.dating.common.ErrorCode;
 import com.lam.dating.common.TeamStatusEnum;
 import com.lam.dating.exception.BusinessException;
 import com.lam.dating.model.dto.TeamQuery;
+import com.lam.dating.model.dto.TeamUpdateRequest;
 import com.lam.dating.model.entity.Team;
 import com.lam.dating.model.entity.User;
 import com.lam.dating.model.entity.UserTeam;
@@ -19,6 +19,7 @@ import com.lam.dating.mapper.TeamMapper;
 import com.lam.dating.service.UserService;
 import com.lam.dating.service.UserTeamService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -125,7 +126,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                 queryWrapper.eq(Team::getId, teamId);
             }
             List<Long> idList = teamQuery.getIdList();
-            if (CollectionUtils.isEmpty(idList)){
+            if (CollectionUtils.isEmpty(idList)) {
                 queryWrapper.in(Team::getId, idList);
             }
             String searchText = teamQuery.getSearchText();
@@ -188,6 +189,39 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             teamUserList.add(teamUserVO);
         }
         return teamUserList;
+    }
+
+    @Override
+    public boolean updateTeam(TeamUpdateRequest team, User loginUser) {
+        if (team == null) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        Long teamId = team.getId();
+        if (teamId == null || teamId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍id错误");
+        }
+        Team oldTeam = this.getById(teamId);
+        if (oldTeam == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍不存在");
+        }
+        TeamUpdateRequest oldTeamUpdateRequest = new TeamUpdateRequest();
+        BeanUtils.copyProperties(oldTeam, oldTeamUpdateRequest);
+        // 如果传入参数和原有队伍所有对应属性相同，直接返回true
+        if (team.equals(oldTeamUpdateRequest)){
+            return true;
+        }
+        if (!oldTeam.getUserId().equals(loginUser.getId()) || !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(team.getStatus());
+        if (TeamStatusEnum.SECRET.equals(statusEnum)) {
+            if (StringUtils.isBlank(team.getPassword())) {
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "加密房间必须设置密码");
+            }
+        }
+        Team updateTeam = new Team();
+        BeanUtils.copyProperties(team, updateTeam);
+        return this.updateById(updateTeam);
     }
 }
 

@@ -8,6 +8,7 @@ import com.lam.dating.common.ResultUtils;
 import com.lam.dating.exception.BusinessException;
 import com.lam.dating.model.dto.TeamAddRequest;
 import com.lam.dating.model.dto.TeamQuery;
+import com.lam.dating.model.dto.TeamUpdateRequest;
 import com.lam.dating.model.entity.Team;
 import com.lam.dating.model.entity.User;
 import com.lam.dating.model.vo.TeamUserVO;
@@ -68,11 +69,12 @@ public class TeamController {
     }
 
     @PostMapping("/update")
-    public BaseResponse<Boolean> updateTeam(@RequestBody Team team) {
+    public BaseResponse<Boolean> updateTeam(@RequestBody TeamUpdateRequest team, HttpServletRequest request) {
         if (team == null) {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
-        boolean updateResult = teamService.updateById(team);
+        User loginUser = userService.getLoginUser(request);
+        boolean updateResult = teamService.updateTeam(team, loginUser);
         if (!updateResult) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "更新失败");
         }
