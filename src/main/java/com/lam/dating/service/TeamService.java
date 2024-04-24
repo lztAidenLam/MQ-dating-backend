@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.lam.dating.model.entity.User;
 import com.lam.dating.model.vo.TeamUserVO;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -74,4 +75,11 @@ public interface TeamService extends IService<Team> {
      * @return 解散结果
      */
     Boolean deleteTeam(long teamId, User loginUser);
+
+    /**
+     * 查询登录用户加入的所有队伍
+     * @param request 当前登录用户
+     * @return 队伍信息vo集合
+     */
+    List<TeamUserVO> selectMyJoinTeams(HttpServletRequest request);
 }

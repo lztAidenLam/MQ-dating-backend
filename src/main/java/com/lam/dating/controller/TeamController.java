@@ -1,5 +1,7 @@
 package com.lam.dating.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lam.dating.common.BaseResponse;
@@ -12,9 +14,12 @@ import com.lam.dating.model.dto.TeamQuery;
 import com.lam.dating.model.dto.TeamUpdateRequest;
 import com.lam.dating.model.entity.Team;
 import com.lam.dating.model.entity.User;
+import com.lam.dating.model.entity.UserTeam;
 import com.lam.dating.model.vo.TeamUserVO;
+import com.lam.dating.model.vo.UserVO;
 import com.lam.dating.service.TeamService;
 import com.lam.dating.service.UserService;
+import com.lam.dating.service.UserTeamService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author AidenLam
@@ -38,6 +44,9 @@ public class TeamController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserTeamService userTeamService;
 
     @Resource
     private RedisTemplate redisTemplate;
@@ -187,5 +196,16 @@ public class TeamController {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
         }
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 查询当前用户所有加入的队伍
+     * @param request 请求
+     * @return 队伍信息vo集合
+     */
+    @GetMapping("/list/my/join")
+    public BaseResponse<List<TeamUserVO>> listMyJoinTeams(HttpServletRequest request) {
+
+        return ResultUtils.success(teamService.selectMyJoinTeams(request));
     }
 }

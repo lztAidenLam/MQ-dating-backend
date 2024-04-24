@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -123,9 +124,26 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return teamId;
     }
 
+    /**
+     * 根据传入查询条件封装查询器
+     * @param teamQuery 传入查询条件
+     * @param isAdmin 是否为管理员
+     * @return 查询器
+     */
     private  LambdaQueryWrapper<Team> getQueryWrapper(TeamQuery teamQuery, boolean isAdmin) {
         LambdaQueryWrapper<Team> queryWrapper = new LambdaQueryWrapper<>();
         if (teamQuery != null) {
+            // 根据状态来查询
+            Integer status = teamQuery.getStatus();
+            TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
+            if (statusEnum == null) {
+                statusEnum = TeamStatusEnum.PUBLIC;
+            }
+            if (!isAdmin && statusEnum.equals(TeamStatusEnum.PRIVATE)) {
+                throw new BusinessException(ErrorCode.NO_AUTH);
+            }
+            queryWrapper.eq(Team::getStatus, statusEnum.getValue());
+
             Long teamId = teamQuery.getId();
             if (teamId != null && teamId > 0) {
                 queryWrapper.eq(Team::getId, teamId);
@@ -156,16 +174,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             if (userId != null && userId > 0) {
                 queryWrapper.eq(Team::getUserId, userId);
             }
-            // 根据状态来查询
-            Integer status = teamQuery.getStatus();
-            TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
-            if (statusEnum == null) {
-                statusEnum = TeamStatusEnum.PUBLIC;
-            }
-            if (!isAdmin && statusEnum.equals(TeamStatusEnum.PRIVATE)) {
-                throw new BusinessException(ErrorCode.NO_AUTH);
-            }
-            queryWrapper.eq(Team::getStatus, statusEnum.getValue());
+
         }
         // 不显示过期队伍
         queryWrapper.and(qw -> qw.gt(Team::getExpireTime, new Date()).or().isNull(Team::getExpireTime));
@@ -182,6 +191,16 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             return new ArrayList<>();
         }
 
+        return getTeamUserVOS(teamList);
+    }
+
+    /**
+     * 将 队伍信息 集合 封装成vo集合 并返回
+     * @param teamList 队伍信息集合
+     * @return 队伍信息vo集合
+     */
+    @NotNull
+    private ArrayList<TeamUserVO> getTeamUserVOS(List<Team> teamList) {
         ArrayList<TeamUserVO> teamUserList = new ArrayList<>();
         // 关联查询创建人的用户信息
         for (Team team : teamList) {
@@ -366,7 +385,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         // 校验队伍是否存在
         Team team = getTeamById(teamId);
         // 校验你是不是队伍的队长
-        if (team.getUserId() != loginUser.getId()) {
+        if (!team.getUserId().equals(loginUser.getId())) {
             throw new BusinessException(ErrorCode.NO_AUTH, "无访问权限");
         }
         // 移除所有加入队伍的关联信息
@@ -380,6 +399,26 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         return this.removeById(teamId);
     }
 
+    @Override
+    public List<TeamUserVO> selectMyJoinTeams(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        // 查询登录用户所有的 user-team 关联记录
+        LambdaQueryWrapper<UserTeam> uTQueryWrapper = new LambdaQueryWrapper<>();
+        uTQueryWrapper.eq(UserTeam::getUserId, loginUser.getId());
+        List<UserTeam> userTeamList = userTeamService.list(uTQueryWrapper);
+        // 查询队伍信息
+        List<Team> teamList = userTeamList.stream()
+                .map(UserTeam::getTeamId)
+                .map(this::getById)
+                .collect(Collectors.toList());
+        return this.getTeamUserVOS(teamList);
+    }
+
+    /**
+     * 通过id查询队伍并判断是否存在
+     * @param teamId 队伍id
+     * @return 队伍信息
+     */
     @NotNull
     private Team getTeamById(long teamId) {
         Team team = this.getById(teamId);
