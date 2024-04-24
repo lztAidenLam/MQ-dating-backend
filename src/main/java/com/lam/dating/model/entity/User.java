@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @TableName(value = "dt_user")
 public class User implements Serializable {
-
+    @TableField(exist = false)
     private static final long serialVersionUID = -978660571544486093L;
     /**
      * id

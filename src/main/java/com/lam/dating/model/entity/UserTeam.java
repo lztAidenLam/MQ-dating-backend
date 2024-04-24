@@ -15,6 +15,9 @@ import lombok.Data;
 @TableName(value ="dt_user_team")
 @Data
 public class UserTeam implements Serializable {
+    @TableField(exist = false)
+    private static final long serialVersionUID = -7274272495987132676L;
+
     /**
      * id
      */
@@ -51,7 +54,6 @@ public class UserTeam implements Serializable {
      */
     private Integer isDelete;
 
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+
 
 }
