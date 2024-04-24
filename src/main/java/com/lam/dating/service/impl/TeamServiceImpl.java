@@ -63,7 +63,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         校验用户最多创建 5 个队伍
          */
         // 队伍人数
-        Integer maxNum = Optional.ofNullable(team.getMaxNum()).orElse(0);
+        int maxNum = Optional.ofNullable(team.getMaxNum()).orElse(0);
         if (maxNum <= 1 || maxNum > 20) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "队伍人数不符合要求");
         }
@@ -257,7 +257,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         Long teamId = teamJoinRequest.getTeamId();
         Long userId = loginUser.getId();
         // 用户加入队伍数量
-        LambdaQueryWrapper<UserTeam> userTeamQueryWrapper = new LambdaQueryWrapper<UserTeam>();
+        LambdaQueryWrapper<UserTeam> userTeamQueryWrapper = new LambdaQueryWrapper<>();
         userTeamQueryWrapper.eq(UserTeam::getUserId, userId);
         long count = userTeamService.count(userTeamQueryWrapper);
         if (count >= 5) {
@@ -411,6 +411,18 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                 .map(UserTeam::getTeamId)
                 .map(this::getById)
                 .collect(Collectors.toList());
+        return this.getTeamUserVOS(teamList);
+    }
+
+    @Override
+    public List<TeamUserVO> selectMyJCreateTeams(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        LambdaQueryWrapper<Team> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Team::getUserId, loginUser.getId());
+        List<Team> teamList = this.list(queryWrapper);
+        if (teamList == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "无当前用户创建的队伍");
+        }
         return this.getTeamUserVOS(teamList);
     }
 

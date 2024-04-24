@@ -45,12 +45,6 @@ public class TeamController {
     @Resource
     private UserService userService;
 
-    @Resource
-    private UserTeamService userTeamService;
-
-    @Resource
-    private RedisTemplate redisTemplate;
-
 
     /**
      * 增加队伍
@@ -208,4 +202,11 @@ public class TeamController {
 
         return ResultUtils.success(teamService.selectMyJoinTeams(request));
     }
+
+    @GetMapping("/list/my/create")
+    public BaseResponse<List<TeamUserVO>> listMyCreateTeams(HttpServletRequest request) {
+
+        return ResultUtils.success(teamService.selectMyJCreateTeams(request));
+    }
+
 }

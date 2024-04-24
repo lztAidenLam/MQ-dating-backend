@@ -78,8 +78,15 @@ public interface TeamService extends IService<Team> {
 
     /**
      * 查询登录用户加入的所有队伍
-     * @param request 当前登录用户
+     * @param request 请求
      * @return 队伍信息vo集合
      */
     List<TeamUserVO> selectMyJoinTeams(HttpServletRequest request);
+
+    /**
+     * 查询当前登录用户创建的所有队伍
+     * @param request 请求
+     * @return 队伍信息vo集合
+     */
+    List<TeamUserVO> selectMyJCreateTeams(HttpServletRequest request);
 }
