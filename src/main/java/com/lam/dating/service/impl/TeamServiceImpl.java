@@ -286,7 +286,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             }
         }
 
-        // 只有一个线程能获取到锁
+//         只有一个线程能获取到锁
         RLock lock = redissonClient.getLock("dating:join_team");
 
         while (true) {
@@ -296,8 +296,6 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                     if (count >= 5) {
                         throw new BusinessException(ErrorCode.PARAMS_ERROR, "最多只能加5个队伍");
                     }
-
-
                     // 不可加入已加入的队伍
                     userTeamQueryWrapper.eq(UserTeam::getTeamId, teamId);
                     UserTeam userTeam = userTeamService.getOne(userTeamQueryWrapper);
