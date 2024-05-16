@@ -12,7 +12,7 @@ public class HelloController {
 
     @GetMapping("/hello")
     public String hello() {
-        System.out.println("ok");
+        System.out.println("hello");
         return "springboot hello";
     }
 }
